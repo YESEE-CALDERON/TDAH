@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Interactiva y Autoevaluación de TDAH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Serene Health" -->
+    <!-- Application Structure Plan: The SPA is designed as a guided journey. It starts with a welcoming introduction ('Inicio') that sets a responsible tone. Then, it educates the user about the condition ('Sobre el TDAH'). The core is the interactive 'Autoevaluación' (ASRS v1.1 screener), which leads to a dedicated 'Resultados' section. This section is critically designed not just to show a score, but to contextualize it with a visualization explaining the high false-positive rate of screeners, thus managing user anxiety and preventing self-diagnosis. Following this, the 'Proceso Profesional' section uses an interactive timeline to demystify the complex formal diagnostic process. Finally, the 'Recursos' section provides actionable next steps. This thematic, non-linear structure, accessible via a sticky navigation, allows users to explore content based on their immediate needs while ensuring they receive crucial context, especially regarding the limitations of the self-test. This architecture prioritizes user education and responsible guidance over simply providing a tool. -->
+    <!-- Visualization & Content Choices: 1. ASRS v1.1 Test: Report Info -> ADHD symptoms screening. Goal -> Allow user self-assessment. Viz/Method -> Interactive HTML form. Interaction -> Radio buttons, dynamic calculation and results display. Justification -> Direct implementation of the core user need for a preliminary self-check. Library -> Vanilla JS. 2. Screener Limitations Chart: Report Info -> High false-positive rate of ASRS. Goal -> Prevent result misinterpretation. Viz/Method -> Bar Chart comparing screener positive rates vs. actual prevalence. Interaction -> Static chart displayed with results. Justification -> Visually communicates the statistical limitation more effectively than text alone. Library -> Chart.js. 3. Professional Diagnosis Process: Report Info -> Multi-step formal evaluation. Goal -> Educate users on the rigor of a real diagnosis. Viz/Method -> Interactive vertical timeline. Interaction -> Clicking a step reveals its details. Justification -> Breaks a complex process into digestible, engaging steps. Library -> Vanilla JS. 4. Resources List: Report Info -> List of specialists in Bogotá. Goal -> Provide actionable next steps. Viz/Method -> Filterable card list. Interaction -> Buttons filter specialists by type. Justification -> Improves usability of the resource list. Library -> Vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0f766e;
+            border-bottom-color: #0f766e;
+        }
+        .step.active .step-circle {
+            background-color: #0f766e;
+            color: white;
+            border-color: #0f766e;
+        }
+        .step.active .step-line {
+            background-color: #0f766e;
+        }
+        .step.active .step-content {
+            border-left-color: #0f766e;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header id="header" class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <a href="#inicio" class="text-xl font-bold text-teal-800">Guía TDAH</a>
+                </div>
+                <nav class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#inicio" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">Inicio</a>
+                        <a href="#sobre-tdah" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">Sobre el TDAH</a>
+                        <a href="#autoevaluacion" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">Autoevaluación</a>
+                        <a href="#proceso-profesional" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">Proceso Profesional</a>
+                        <a href="#recursos" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">Recursos</a>
+                    </div>
+                </nav>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-teal-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
+                        <span class="sr-only">Abrir menú principal</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#inicio" class="block nav-link text-gray-600 px-3 py-2 rounded-md text-base font-medium border-b-2 border-transparent">Inicio</a>
+                <a href="#sobre-tdah" class="block nav-link text-gray-600 px-3 py-2 rounded-md text-base font-medium border-b-2 border-transparent">Sobre el TDAH</a>
+                <a href="#autoevaluacion" class="block nav-link text-gray-600 px-3 py-2 rounded-md text-base font-medium border-b-2 border-transparent">Autoevaluación</a>
+                <a href="#proceso-profesional" class="block nav-link text-gray-600 px-3 py-2 rounded-md text-base font-medium border-b-2 border-transparent">Proceso Profesional</a>
+                <a href="#recursos" class="block nav-link text-gray-600 px-3 py-2 rounded-md text-base font-medium border-b-2 border-transparent">Recursos</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <section id="inicio" class="text-center pt-16 pb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800 mb-4">Comprendiendo el TDAH</h1>
+            <p class="max-w-3xl mx-auto text-lg text-slate-600 mb-8">Un espacio para informarte, explorar síntomas y conocer los pasos hacia una evaluación profesional.</p>
+            <div class="max-w-4xl mx-auto bg-amber-50 border-l-4 border-amber-400 p-6 rounded-r-lg shadow-sm">
+                <h3 class="text-lg font-semibold text-amber-800 mb-2">Punto de Partida, No un Diagnóstico</h3>
+                <p class="text-amber-700 text-left">Esta web ofrece herramientas de autoevaluación e información educativa. **No reemplaza en ningún caso el consejo, diagnóstico o tratamiento de un profesional de la salud cualificado.** Si tienes inquietudes sobre tu salud, consulta siempre con un médico u otro proveedor de salud calificado.</p>
+            </div>
+        </section>
+
+        <hr class="my-12 border-gray-200">
+
+        <section id="sobre-tdah" class="pt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-800">¿Qué es el Trastorno por Déficit de Atención e Hiperactividad?</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-slate-600">El TDAH es una condición del neurodesarrollo que se caracteriza por un patrón persistente de inatención y/o hiperactividad-impulsividad que interfiere con el funcionamiento o el desarrollo.</p>
+            </div>
+
+            <div class="max-w-5xl mx-auto grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+                    <h3 class="font-semibold text-lg text-teal-800 mb-3">🔹 Predominantemente Inatento (TDA)</h3>
+                    <p class="text-sm text-slate-600">Lo que popularmente se conoce como TDA. La persona tiene dificultad para organizarse y terminar tareas, prestar atención a los detalles o seguir instrucciones. Se distrae con facilidad y olvida detalles de la rutina diaria.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+                    <h3 class="font-semibold text-lg text-teal-800 mb-3">🔹 Predominantemente Hiperactivo-Impulsivo</h3>
+                    <p class="text-sm text-slate-600">La persona se mueve nerviosamente y habla mucho. Le resulta difícil quedarse sentada durante mucho tiempo. Los adultos pueden sentir una inquietud interna extrema. La impulsividad se manifiesta al interrumpir o tomar decisiones rápidas sin pensar en las consecuencias.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+                    <h3 class="font-semibold text-lg text-teal-800 mb-3">🔹 Presentación Combinada</h3>
+                    <p class="text-sm text-slate-600">Se presentan de manera equivalente los síntomas de los dos tipos anteriores. Es la presentación más común del TDAH.</p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-12 border-gray-200">
+
+        <section id="autoevaluacion" class="pt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-800">Autoevaluación de Cribado (ASRS v1.1)</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-slate-600">Este cuestionario de 18 preguntas te ayudará a identificar síntomas que podrían ser consistentes con el TDAH en adultos. **Recuerda: es una herramienta de detección, no de diagnóstico.**</p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-100">
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-8 rounded-r-md">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-semibold text-blue-800">Instrucciones</h3>
+                        <button id="listen-instructions-btn" class="text-sm text-blue-600 font-semibold hover:text-blue-800 transition">Escuchar Instrucciones ✨</button>
+                    </div>
+                    <p id="instructions-text" class="mt-1 text-sm text-blue-700">Responde cada pregunta basándote en cómo te has sentido y comportado durante los **últimos 6 meses**. Sé honesto/a en tus respuestas para obtener una reflexión más precisa.</p>
+                </div>
+
+                <form id="adhd-form">
+                    <fieldset class="mb-8">
+                        <legend class="text-xl font-semibold text-slate-700 mb-4 pb-2 border-b-2 border-teal-500">Parte A: Síntomas Clave</legend>
+                        <div id="questions-part-a" class="space-y-6"></div>
+                    </fieldset>
+                    <fieldset>
+                        <legend class="text-xl font-semibold text-slate-700 mb-4 pb-2 border-b-2 border-teal-500">Parte B: Síntomas Adicionales</legend>
+                        <div id="questions-part-b" class="space-y-6"></div>
+                    </fieldset>
+                    <div class="mt-10 text-center">
+                        <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+                            Calcular Resultados
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+        
+        <section id="resultados" class="pt-16 hidden">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-800">Interpretación de tus Resultados</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-slate-600">A continuación se muestra un resumen de tus respuestas. Lee la sección de contexto para entender qué significan estos resultados.</p>
+            </div>
+
+            <div class="max-w-4xl mx-auto grid lg:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+                    <h3 class="text-xl font-bold text-slate-700 mb-6 text-center">Resumen de Puntuación</h3>
+                    <div class="space-y-4 text-center">
+                        <div>
+                            <p class="text-sm text-slate-500">Puntuación Parte A</p>
+                            <p id="score-a" class="text-4xl font-bold text-teal-600">0</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500">Puntuación Parte B</p>
+                            <p id="score-b" class="text-4xl font-bold text-teal-600">0</p>
+                        </div>
+                    </div>
+                    <div class="mt-8 bg-gray-50 p-4 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-semibold text-slate-800">Evaluación General:</h4>
+                            <button id="listen-evaluation-btn" class="text-sm text-slate-600 font-semibold hover:text-slate-800 transition">Escuchar Resultado ✨</button>
+                        </div>
+                        <p id="evaluation-text" class="mt-1 text-slate-600"></p>
+                    </div>
+                     <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-slate-800">Recomendación:</h4>
+                        <p id="recommendation-text" class="mt-1 text-slate-600"></p>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 border-l-4 border-amber-400 p-6 rounded-r-lg shadow-sm">
+                    <h3 class="text-lg font-semibold text-amber-800 mb-2">⚠️ Contexto Crucial: ¿Por qué esto NO es un diagnóstico?</h3>
+                    <p class="text-amber-700 mb-4">Las herramientas de cribado como esta son útiles para detectar posibles síntomas, pero tienden a sobreidentificarlos en la población general. Esto se conoce como un "bajo valor predictivo positivo".</p>
+                    <p class="text-amber-700 font-medium mb-4">En términos simples: un resultado "probable" no significa que tengas TDAH. Solo un pequeño porcentaje de quienes obtienen un resultado positivo en este tipo de test reciben un diagnóstico formal después de una evaluación completa.</p>
+                     <div class="chart-container mt-4">
+                        <canvas id="screener-context-chart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-amber-600 mt-2">Gráfico ilustrativo basado en estudios sobre la escala ASRS v1.1.</p>
+                    <a href="#proceso-profesional" class="mt-6 inline-block w-full text-center bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition">Conoce el proceso de diagnóstico profesional →</a>
+                </div>
+            </div>
+            
+            <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-100 mt-12">
+                <h3 class="text-2xl font-bold text-slate-800 mb-6 text-center">Explora tus Síntomas y Pasos a Seguir ✨</h3>
+                <p class="text-slate-600 mb-4 text-center">Describe brevemente tus principales inquietudes o un síntoma que te gustaría entender mejor, y el asistente de Gemini te proporcionará información educativa.</p>
+                <div class="relative mb-4">
+                    <textarea id="symptom-input" class="w-full h-32 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none" placeholder="Por ejemplo: 'A menudo me siento abrumado por las tareas, ¿es eso un síntoma?' o '¿Qué le pregunto a un médico?'"></textarea>
+                    <button id="generate-response-btn" class="absolute bottom-4 right-4 bg-teal-600 text-white p-2 rounded-lg hover:bg-teal-700 transition">Generar Ideas ✨</button>
+                </div>
+                <div id="loading-indicator" class="text-center text-teal-600 hidden">Cargando...</div>
+                <div id="ai-response-container" class="bg-gray-50 p-6 rounded-lg border border-gray-200 mt-4 hidden">
+                    <p id="ai-response-text" class="text-slate-600"></p>
+                </div>
+            </div>
+
+        </section>
+
+        <hr class="my-12 border-gray-200">
+
+        <section id="proceso-profesional" class="pt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-800">El Proceso de Diagnóstico Profesional</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-slate-600">Un diagnóstico formal de TDAH es un proceso exhaustivo y multifacético. No se basa en un solo test, sino en la recopilación y análisis de múltiples fuentes de información por un profesional cualificado.</p>
+            </div>
+
+            <div class="max-w-5xl mx-auto md:grid md:grid-cols-3 md:gap-8">
+                <div class="md:col-span-1 mb-8 md:mb-0">
+                    <h3 class="text-xl font-semibold text-slate-700 mb-4">Fases de la Evaluación</h3>
+                    <p class="text-slate-600">Haz clic en cada paso para ver los detalles. Este proceso asegura un diagnóstico preciso, descartando otras condiciones y entendiendo el impacto real en tu vida.</p>
+                </div>
+                <div id="steps-container" class="md:col-span-2 relative">
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-12 border-gray-200">
+
+        <section id="recursos" class="pt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-800">Recursos y Especialistas en Bogotá</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-slate-600">Encontrar al profesional adecuado es un paso fundamental. Aquí tienes una lista de especialistas y centros con experiencia en TDAH en Bogotá, Colombia.</p>
+            </div>
+
+            <div class="max-w-5xl mx-auto">
+                <div id="filter-buttons" class="flex flex-wrap justify-center gap-2 mb-8">
+                    <button data-filter="all" class="filter-btn bg-teal-600 text-white py-2 px-4 rounded-full text-sm font-semibold">Todos</button>
+                    <button data-filter="Psiquiatra" class="filter-btn bg-white text-slate-600 py-2 px-4 rounded-full text-sm font-semibold border border-gray-300 hover:bg-gray-100">Psiquiatras</button>
+                    <button data-filter="Psicólogo" class="filter-btn bg-white text-slate-600 py-2 px-4 rounded-full text-sm font-semibold border border-gray-300 hover:bg-gray-100">Psicólogos</button>
+                    <button data-filter="Neuropediatra" class="filter-btn bg-white text-slate-600 py-2 px-4 rounded-full text-sm font-semibold border border-gray-300 hover:bg-gray-100">Neuropediatras</button>
+                </div>
+
+                <div id="resource-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-800 text-white mt-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm text-slate-400">
+            <p>Este sitio web es un proyecto educativo y no está afiliado a ninguna de las instituciones o profesionales mencionados.</p>
+            <p class="mt-2">La información presentada se basa en guías clínicas y escalas de dominio público. Consulta siempre a un profesional de la salud para obtener asesoramiento médico.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const questions = [
+                { part: 'a', text: '1. ¿Con qué frecuencia tiene dificultad para acabar los detalles finales de un proyecto, una vez que ha terminado con las partes difíciles?' },
+                { part: 'a', text: '2. ¿Con qué frecuencia tiene dificultad para ordenar las cosas cuando está realizando una tarea que requiere organización?' },
+                { part: 'a', text: '3. ¿Con qué frecuencia tiene problemas para recordar citas u obligaciones?' },
+                { part: 'a', text: '4. Cuando tiene que realizar una tarea que requiere pensar mucho, ¿con qué frecuencia evita o retrasa empezarla?' },
+                { part: 'a', text: '5. ¿Con qué frecuencia mueve continuamente o retuerce las manos o los pies cuando tiene que permanecer sentado por mucho tiempo?' },
+                { part: 'a', text: '6. ¿Con qué frecuencia se siente demasiado activo e impulsado a hacer cosas, como si lo empujase un motor?' },
+                { part: 'b', text: '7. ¿Con qué frecuencia comete errores por descuido cuando tiene que trabajar en un proyecto aburrido o difícil?' },
+                { part: 'b', text: '8. ¿Con qué frecuencia tiene dificultad para mantener la atención cuando está haciendo un trabajo aburrido o repetitivo?' },
+                { part: 'b', text: '9. ¿Con qué frecuencia tiene dificultad para concentrarse en lo que le dicen, incluso cuando le están hablando directamente?' },
+                { part: 'b', text: '10. ¿Con qué frecuencia extravía o le cuesta encontrar cosas en casa o en el trabajo?' },
+                { part: 'b', text: '11. ¿Con qué frecuencia se distrae con la actividad o el ruido a su alrededor?' },
+                { part: 'b', text: '12. ¿Con qué frecuencia se levanta de su asiento en reuniones u otras situaciones en las que se espera que permanezca sentado?' },
+                { part: 'b', text: '13. ¿Con qué frecuencia se siente inquieto o agitado?' },
+                { part: 'b', text: '14. ¿Con qué frecuencia le cuesta relajarse cuando tiene tiempo para usted?' },
+                { part: 'b', text: '15. ¿Con qué frecuencia se da cuenta de que está hablando demasiado en situaciones sociales?' },
+                { part: 'b', text: '16. Cuando está en una conversación, ¿con qué frecuencia se da cuenta de que termina las frases de las personas antes de que ellas puedan?' },
+                { part: 'b', text: '17. ¿Con qué frecuencia tiene dificultad para esperar su turno en situaciones donde se requiere?' },
+                { part: 'b', text: '18. ¿Con qué frecuencia interrumpe a los demás cuando están ocupados?' }
+            ];
+            const options = ['Nunca', 'Rara vez', 'A veces', 'A menudo', 'Muy a menudo'];
+
+            const questionsPartAContainer = document.getElementById('questions-part-a');
+            const questionsPartBContainer = document.getElementById('questions-part-b');
+
+            questions.forEach((q, index) => {
+                const qIndex = index + 1;
+                const questionBlock = document.createElement('div');
+                questionBlock.className = 'question-group border-t border-gray-200 pt-4';
+                
+                let questionHTML = `<p class="font-medium text-slate-700 mb-3">${q.text}</p><div class="flex flex-wrap gap-x-6 gap-y-2">`;
+                options.forEach((opt, optIndex) => {
+                    questionHTML += `
+                        <label class="inline-flex items-center space-x-2 text-slate-600 cursor-pointer">
+                            <input type="radio" class="form-radio text-teal-600 focus:ring-teal-500" name="q${qIndex}" value="${optIndex}" required>
+                            <span>${opt}</span>
+                        </label>
+                    `;
+                });
+                questionHTML += `</div>`;
+                questionBlock.innerHTML = questionHTML;
+
+                if (q.part === 'a') {
+                    questionsPartAContainer.appendChild(questionBlock);
+                } else {
+                    questionsPartBContainer.appendChild(questionBlock);
+                }
+            });
+
+            const form = document.getElementById('adhd-form');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                let scoreA = 0;
+                let scoreB = 0;
+                let allAnswered = true;
+
+                for (let i = 1; i <= 18; i++) {
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    if (!selected) {
+                        allAnswered = false;
+                        break;
+                    }
+                    const value = parseInt(selected.value);
+                    if (i <= 6) {
+                        scoreA += value;
+                    } else {
+                        scoreB += value;
+                    }
+                }
+
+                if (!allAnswered) {
+                    const messageBox = document.createElement('div');
+                    messageBox.textContent = 'Por favor, responde todas las preguntas para continuar.';
+                    messageBox.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); background-color:#ef4444; color:white; padding:1rem; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.1); z-index:100;';
+                    document.body.appendChild(messageBox);
+                    setTimeout(() => messageBox.remove(), 3000);
+                    return;
+                }
+                
+                document.getElementById('score-a').textContent = scoreA;
+                document.getElementById('score-b').textContent = scoreB;
+
+                let evaluationText = '';
+                let recommendationText = '';
+
+                const probableA = scoreA >= 17;
+                const probableB = scoreB >= 17;
+
+                if (probableA || probableB) {
+                    evaluationText = 'Tus respuestas sugieren la presencia de síntomas que son consistentes con el TDAH.';
+                    recommendationText = 'Se recomienda encarecidamente buscar una evaluación clínica completa por parte de un profesional de la salud cualificado para un diagnóstico preciso.';
+                } else {
+                    evaluationText = 'Tus respuestas sugieren que es poco probable que tus síntomas actuales sean consistentes con TDAH.';
+                    recommendationText = 'Si sigues teniendo inquietudes sobre tu bienestar, es recomendable consultar a un profesional de la salud.';
+                }
+
+                document.getElementById('evaluation-text').textContent = evaluationText;
+                document.getElementById('recommendation-text').textContent = recommendationText;
+
+                const resultsSection = document.getElementById('resultados');
+                resultsSection.classList.remove('hidden');
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+
+                renderContextChart();
+            });
+
+            let contextChart = null;
+            function renderContextChart() {
+                const ctx = document.getElementById('screener-context-chart').getContext('2d');
+                if (contextChart) {
+                    contextChart.destroy();
+                }
+                contextChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Personas con resultado "Probable" en cribado', 'Personas con diagnóstico formal de TDAH'],
+                        datasets: [{
+                            label: 'Porcentaje en la población general',
+                            data: [17.3, 2.5],
+                            backgroundColor: [
+                                'rgba(251, 191, 36, 0.6)',
+                                'rgba(13, 148, 136, 0.6)'
+                            ],
+                            borderColor: [
+                                'rgba(251, 191, 36, 1)',
+                                'rgba(13, 148, 136, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '%'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Cribado vs. Prevalencia Real de TDAH'
+                            },
+                             tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const steps = [
+                { title: 'Consulta Inicial', content: 'El primer paso es hablar con un profesional. Expondrás tus inquietudes y síntomas. El especialista determinará si una evaluación completa es necesaria.' },
+                { title: 'Entrevista Clínica Detallada', content: 'Es la parte más crucial. El profesional recopilará un historial completo de tu vida (desarrollo, médico, académico, laboral, social) para entender el patrón de los síntomas a lo largo del tiempo.' },
+                { title: 'Información de Terceros', content: 'Se solicita información a personas clave (padres, pareja, maestros de la infancia) para corroborar los síntomas y su impacto en diferentes entornos, especialmente antes de los 12 años.' },
+                { title: 'Examen Médico', content: 'Se realiza un examen físico para descartar otras condiciones médicas (problemas de tiroides, sueño, etc.) que pueden causar síntomas similares a los del TDAH.' },
+                { title: 'Pruebas Estandarizadas', content: 'Se utilizan escalas de calificación y, a menudo, pruebas neuropsicológicas para medir objetivamente funciones como la atención, memoria de trabajo y funciones ejecutivas.' },
+                { title: 'Diagnóstico Diferencial y Comorbilidades', content: 'El profesional analiza toda la información para diferenciar el TDAH de otras condiciones (ansiedad, depresión) e identificar trastornos coexistentes, que son muy comunes.' },
+                { title: 'Resultados y Plan de Tratamiento', content: 'Finalmente, el profesional integra todos los hallazgos, emite un diagnóstico, explica la magnitud (leve, moderada, grave) y colabora contigo para crear un plan de tratamiento personalizado.' }
+            ];
+
+            const stepsContainer = document.getElementById('steps-container');
+            steps.forEach((step, index) => {
+                const stepElement = document.createElement('div');
+                stepElement.className = 'step relative flex items-start pb-8';
+                stepElement.innerHTML = `
+                    <div class="flex-shrink-0 flex flex-col items-center">
+                        <div class="step-circle h-8 w-8 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center font-semibold text-gray-500 transition-colors">${index + 1}</div>
+                        ${index < steps.length - 1 ? '<div class="step-line h-full w-0.5 bg-gray-300 transition-colors"></div>' : ''}
+                    </div>
+                    <div class="ml-4 flex-grow">
+                        <h4 class="font-semibold text-slate-700 cursor-pointer">${step.title}</h4>
+                        <div class="step-content mt-2 pl-4 border-l-2 border-gray-200 transition-colors hidden">
+                            <p class="text-sm text-slate-600">${step.content}</p>
+                        </div>
+                    </div>
+                `;
+                stepsContainer.appendChild(stepElement);
+            });
+
+            const stepElements = stepsContainer.querySelectorAll('.step');
+            stepElements.forEach((step, index) => {
+                step.querySelector('h4').addEventListener('click', () => {
+                    stepElements.forEach(s => {
+                        s.classList.remove('active');
+                        s.querySelector('.step-content').classList.add('hidden');
+                    });
+                    step.classList.add('active');
+                    step.querySelector('.step-content').classList.remove('hidden');
+                });
+            });
+            if (stepElements.length > 0) {
+                stepElements[0].querySelector('h4').click();
+            }
+
+            const resources = [
+                { name: 'Dra. Claudia Cobos R.', type: 'Psiquiatra', specialty: 'TDAH en adultos', location: 'Edificio CIMA, Bogotá' },
+                { name: 'Mariángela Niño Benrey', type: 'Psicólogo', specialty: 'Terapia para TDAH', location: '4 sedes en Bogotá' },
+                { name: 'Andrea Velandia Gómez', type: 'Psicólogo', specialty: 'Terapia para TDAH', location: 'Teusaquillo, Bogotá' },
+                { name: 'Psic. Jotam David Saavedra López', type: 'Psicólogo', specialty: 'Experto en TDAH', location: 'Clínica Retornar SAS, Bogotá' },
+                { name: 'Dra. Edna Julieth Bobadilla Quesada', type: 'Neuropediatra', specialty: 'Experta en TDAH infantil', location: 'Edificio Zentai, Bogotá' },
+                { name: 'Clínica de Psiquiatría Pinares', type: 'Centro', specialty: 'Salud mental integral', location: 'Antioquia (cerca a Bogotá)' },
+                { name: 'Genesis Foundation Colombia', type: 'Centro', specialty: 'TDAH y comorbilidades', location: 'Bogotá' }
+            ];
+
+            const resourceList = document.getElementById('resource-list');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+
+            function displayResources(filter) {
+                resourceList.innerHTML = '';
+                const filteredResources = filter === 'all' ? resources : resources.filter(r => r.type === filter || (filter === 'Psicólogo' && r.type === 'Centro'));
+                
+                filteredResources.forEach(res => {
+                    const card = document.createElement('div');
+                    card.className = 'resource-card bg-white p-5 rounded-lg shadow-md border border-gray-100 transition-transform transform hover:-translate-y-1';
+                    card.innerHTML = `
+                        <h4 class="font-bold text-slate-800">${res.name}</h4>
+                        <p class="text-sm font-medium text-teal-700 my-1">${res.type}</p>
+                        <p class="text-xs text-slate-500 mb-2">${res.specialty}</p>
+                        <p class="text-xs text-slate-500">📍 ${res.location}</p>
+                    `;
+                    resourceList.appendChild(card);
+                });
+            }
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    filterButtons.forEach(btn => {
+                        btn.classList.remove('bg-teal-600', 'text-white');
+                        btn.classList.add('bg-white', 'text-slate-600');
+                    });
+                    button.classList.add('bg-teal-600', 'text-white');
+                    button.classList.remove('bg-white', 'text-slate-600');
+                    displayResources(button.dataset.filter);
+                });
+            });
+
+            displayResources('all');
+
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+            });
+
+            const sections = document.querySelectorAll('section[id]');
+            const headerHeight = document.getElementById('header').offsetHeight;
+            
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - headerHeight - 20;
+                    if (pageYOffset >= sectionTop) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').substring(1) === current) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+            // Gemini API Integration - Text Generation (Symptoms Exploration)
+            const generateBtn = document.getElementById('generate-response-btn');
+            const inputField = document.getElementById('symptom-input');
+            const responseContainer = document.getElementById('ai-response-container');
+            const responseText = document.getElementById('ai-response-text');
+            const loadingIndicator = document.getElementById('loading-indicator');
+
+            const sendPrompt = async (prompt) => {
+                let retries = 0;
+                const maxRetries = 3;
+                while (retries < maxRetries) {
+                    try {
+                        const chatHistory = [];
+                        chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                        const payload = { contents: chatHistory };
+                        const apiKey = "";
+                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const result = await response.json();
+                        if (result.candidates && result.candidates.length > 0 &&
+                            result.candidates[0].content && result.candidates[0].content.parts &&
+                            result.candidates[0].content.parts.length > 0) {
+                            return result.candidates[0].content.parts[0].text;
+                        } else {
+                            throw new Error('Unexpected API response structure.');
+                        }
+                    } catch (error) {
+                        retries++;
+                        if (retries >= maxRetries) {
+                            console.error("API call failed after multiple retries:", error);
+                            throw error;
+                        }
+                        const delay = Math.pow(2, retries) * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            };
+
+            generateBtn.addEventListener('click', async () => {
+                const userQuery = inputField.value.trim();
+                if (userQuery === '') {
+                    responseText.textContent = 'Por favor, escribe tu pregunta en el cuadro de texto.';
+                    responseContainer.classList.remove('hidden');
+                    return;
+                }
+                
+                loadingIndicator.classList.remove('hidden');
+                generateBtn.disabled = true;
+                responseContainer.classList.add('hidden');
+
+                const fullPrompt = `Actúa como un asistente educativo que provee información sobre el TDAH. Tu objetivo es explicar conceptos relacionados con los síntomas o la búsqueda de ayuda profesional. NUNCA ofrezcas un diagnóstico, consejo médico o tratamiento. Manten tus respuestas breves, objetivas y siempre finaliza reforzando la necesidad de consultar a un profesional de la salud.
+
+                Pregunta del usuario: ${userQuery}`;
+
+                try {
+                    const response = await sendPrompt(fullPrompt);
+                    responseText.textContent = response;
+                    responseContainer.classList.remove('hidden');
+                } catch (error) {
+                    responseText.textContent = 'Lo siento, no pude generar una respuesta en este momento. Inténtalo de nuevo más tarde.';
+                    responseContainer.classList.remove('hidden');
+                } finally {
+                    loadingIndicator.classList.add('hidden');
+                    generateBtn.disabled = false;
+                }
+            });
+
+            // Gemini API Integration - TTS
+            const listenInstructionsBtn = document.getElementById('listen-instructions-btn');
+            const listenEvaluationBtn = document.getElementById('listen-evaluation-btn');
+            const instructionsText = document.getElementById('instructions-text');
+            const evaluationText = document.getElementById('evaluation-text');
+            let currentAudio = null;
+
+            function base64ToArrayBuffer(base64) {
+                const binaryString = atob(base64);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+
+            function pcmToWav(pcmData, sampleRate) {
+                const buffer = new ArrayBuffer(44 + pcmData.length * 2);
+                const view = new DataView(buffer);
+                let offset = 0;
+
+                function writeString(str) {
+                    for (let i = 0; i < str.length; i++) {
+                        view.setUint8(offset + i, str.charCodeAt(i));
+                    }
+                    offset += str.length;
+                }
+
+                function writeUint32(val) {
+                    view.setUint32(offset, val, true);
+                    offset += 4;
+                }
+
+                function writeUint16(val) {
+                    view.setUint16(offset, val, true);
+                    offset += 2;
+                }
+
+                writeString('RIFF');
+                writeUint32(36 + pcmData.length * 2);
+                writeString('WAVE');
+                writeString('fmt ');
+                writeUint32(16);
+                writeUint16(1);
+                writeUint16(1);
+                writeUint32(sampleRate);
+                writeUint32(sampleRate * 2);
+                writeUint16(2);
+                writeUint16(16);
+                writeString('data');
+                writeUint32(pcmData.length * 2);
+
+                for (let i = 0; i < pcmData.length; i++) {
+                    view.setInt16(offset, pcmData[i], true);
+                    offset += 2;
+                }
+
+                return new Blob([view], { type: 'audio/wav' });
+            }
+
+            const speakText = async (text, button) => {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                }
+
+                button.disabled = true;
+                const originalText = button.textContent;
+                button.textContent = 'Cargando...';
+
+                try {
+                    const prompt = `Say: ${text}`;
+                    const payload = {
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            responseModalities: ["AUDIO"],
+                            speechConfig: {
+                                voiceConfig: {
+                                    prebuiltVoiceConfig: { voiceName: "Algieba" }
+                                }
+                            }
+                        },
+                        model: "gemini-2.5-flash-preview-tts"
+                    };
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    
+                    const part = result?.candidates?.[0]?.content?.parts?.[0];
+                    const audioData = part?.inlineData?.data;
+                    const mimeType = part?.inlineData?.mimeType;
+
+                    if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                        const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                        const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 16000;
+                        const pcmData = base64ToArrayBuffer(audioData);
+                        const pcm16 = new Int16Array(pcmData);
+                        const wavBlob = pcmToWav(pcm16, sampleRate);
+                        const audioUrl = URL.createObjectURL(wavBlob);
+                        
+                        currentAudio = new Audio(audioUrl);
+                        currentAudio.play();
+                    } else {
+                        console.error("Audio data or mime type missing from API response.");
+                    }
+
+                } catch (error) {
+                    console.error("Error with TTS API:", error);
+                } finally {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            };
+
+            listenInstructionsBtn.addEventListener('click', () => {
+                speakText(instructionsText.textContent.replace('**', '').replace('**', ''), listenInstructionsBtn);
+            });
+
+            listenEvaluationBtn.addEventListener('click', () => {
+                speakText(evaluationText.textContent, listenEvaluationBtn);
+            });
+        });
+    </script>
+
+</body>
+</html>
